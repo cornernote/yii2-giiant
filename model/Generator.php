@@ -112,16 +112,17 @@ class Generator extends \yii\gii\generators\model\Generator
         foreach ($this->getTableNames() as $tableName) {
 
             $className = $this->generateClassName($tableName);
-
+            $queryClassName = ($this->generateQuery) ? $this->generateQueryClassName($className) : false;
             $tableSchema = $db->getTableSchema($tableName);
             $params      = [
-                'tableName'   => $tableName,
-                'className'   => $className,
-                'tableSchema' => $tableSchema,
-                'labels'      => $this->generateLabels($tableSchema),
-                'rules'       => $this->generateRules($tableSchema),
-                'relations'   => isset($relations[$className]) ? $relations[$className] : [],
-                'ns'          => $this->ns,
+                'tableName'      => $tableName,
+                'className'      => $className,
+                'queryClassName' => $queryClassName,
+                'tableSchema'    => $tableSchema,
+                'labels'         => $this->generateLabels($tableSchema),
+                'rules'          => $this->generateRules($tableSchema),
+                'relations'      => isset($relations[$className]) ? $relations[$className] : [],
+                'ns'             => $this->ns,
             ];
 
             $files[] = new CodeFile(
@@ -136,6 +137,18 @@ class Generator extends \yii\gii\generators\model\Generator
                     $this->render('model-extended.php', $params)
                 );
             }
+
+            if ($queryClassName) {
+                $params = [
+                    'className' => $queryClassName,
+                    'modelClassName' => $className,
+                ];
+                $files[] = new CodeFile(
+                    Yii::getAlias('@' . str_replace('\\', '/', $this->queryNs)) . '/' . $queryClassName . '.php',
+                    $this->render('query.php', $params)
+                );
+            }
+
         }
         return $files;
     }
